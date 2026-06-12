@@ -598,6 +598,25 @@ jobs:
         cd $PROJECTFOLDER
         crave stop --all
 
+      # Upload ROM to SourceForge
+    - name: Upload ROM to SourceForge
+      if: ${{ success() }}
+      continue-on-error: true
+      env:
+        SF_KEY_B64: ${{ secrets.SF_PRIVATE_KEY }}
+      run: |
+        cd $PROJECTFOLDER
+        mkdir -p ~/.ssh
+        printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key
+        chmod 600 ~/.ssh/sf_key
+        ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null
+        ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -name 'axion-*.zip' 2>/dev/null | head -1" | tr -d '\r')
+        [ -z "$ZIP" ] && ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -name '*.zip' ! -name '*ota*' | head -1" | tr -d '\r')
+        [ -z "$ZIP" ] && echo 'No ZIP!' && exit 0
+        echo "Uploading: $(basename $ZIP)"
+        crave ssh -- "mkdir -p ~/.ssh; printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key; chmod 600 ~/.ssh/sf_key; ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null; rsync -avP -e 'ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no' '$ZIP' 'mkpromvp@frs.sourceforge.net:/home/frs/project/gta4l-builds/'"
+        echo 'Done! https://sourceforge.net/projects/gta4l-builds/files/'
+
       # Upload '.zip's and '.img's directly from 'crave' ssh.
     - name: Upload build artifact(s)
       continue-on-error: true
