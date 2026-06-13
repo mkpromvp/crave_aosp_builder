@@ -622,7 +622,7 @@ jobs:
     - name: Upload ROM to SourceForge
       if: ${{ success() }}
       env:
-      SF_KEY_B64: ${{ secrets.SF_PRIVATE_KEY }}
+       SF_KEY_B64: ${{ secrets.SF_PRIVATE_KEY }}
       shell: bash
       run: |
        set -euo pipefail
