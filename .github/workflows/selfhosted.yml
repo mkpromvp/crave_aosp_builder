@@ -630,7 +630,7 @@ jobs:
         printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key
         chmod 600 ~/.ssh/sf_key
         ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null
-        ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -name '*.zip' ! -name '*ota*' ! -name '*incremental*' 2>/dev/null | head -1" | tr -d '\r\n')
+        ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -name '*.zip' ! -name '*ota*' ! -name '*incremental*' 2>/dev/null | head -1" | grep -v "Selecting" | grep -v "Error" | tr -d '\r\n')
         if [ -z "$ZIP" ]; then echo "No ZIP found!"; exit 0; fi
         FILENAME=$(basename "$ZIP")
         ROM_NAME=$(echo "$FILENAME" | sed 's/[-_].*//' | tr '[:upper:]' '[:lower:]')
