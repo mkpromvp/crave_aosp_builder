@@ -598,7 +598,7 @@ jobs:
         cd $PROJECTFOLDER
         crave stop --all
 
-      # Upload ROM to SourceForge
+      # Smart Upload to SourceForge
     - name: Upload ROM to SourceForge
       if: ${{ success() }}
       continue-on-error: true
@@ -610,68 +610,35 @@ jobs:
         printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key
         chmod 600 ~/.ssh/sf_key
         ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null
-        ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -name 'axion-*.zip' 2>/dev/null | head -1" | tr -d '\r')
-        [ -z "$ZIP" ] && ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -name '*.zip' ! -name '*ota*' | head -1" | tr -d '\r')
-        [ -z "$ZIP" ] && echo 'No ZIP!' && exit 0
-        echo "Uploading: $(basename $ZIP)"
-        crave ssh -- "mkdir -p ~/.ssh; printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key; chmod 600 ~/.ssh/sf_key; ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null; rsync -avP -e 'ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no' '$ZIP' 'mkpromvp@frs.sourceforge.net:/home/frs/project/gta4l-builds/'"
-        echo 'Done! https://sourceforge.net/projects/gta4l-builds/files/'
 
+        ZIP=$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -type f -name '*.zip' ! -name '*ota*' ! -name '*incremental*' 2>/dev/null | head -1" | grep -E '\.zip$' | tr -d '\r\n')
 
-      # Smart Upload to SourceForge
-    - name: Upload ROM to SourceForge
-      if: ${{ success() }}
-      env:
-       SF_KEY_B64: ${{ secrets.SF_PRIVATE_KEY }}
-      shell: bash
-      run: |
-       set -euo pipefail
-       cd "$PROJECTFOLDER"
+        if [ -z "$ZIP" ]; then echo "No ZIP found!"; exit 0; fi
 
-       mkdir -p ~/.ssh
-       printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key
-       chmod 600 ~/.ssh/sf_key
-       ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null
+        FILENAME=$(basename -- "$ZIP")
+        ROM_NAME=$(echo "$FILENAME" | sed 's/[-_].*//' | tr '[:upper:]' '[:lower:]')
 
-       RAW_ZIP="$(crave ssh -- "find out/target/product/${{ github.event.inputs.DEVICE_NAME }}/ -maxdepth 1 -type f -name '*.zip' ! -name '*ota*' ! -name '*incremental*' 2>/dev/null" | tr -d '\r')"
-       ZIP="$(printf '%s\n' "$RAW_ZIP" | grep -E '^out/target/product/.+\.zip$' | head -n 1 || true)"
+        case "$ROM_NAME" in
+          axion)      SF_FOLDER="AxionOS" ;;
+          lineage)    SF_FOLDER="LineageOS" ;;
+          crdroid)    SF_FOLDER="crDroid" ;;
+          infinity*)  SF_FOLDER="InfinityX" ;;
+          lunaris)    SF_FOLDER="Lunaris" ;;
+          rising*)    SF_FOLDER="RisingOS" ;;
+          pixel*)     SF_FOLDER="PixelOS" ;;
+          arrow)      SF_FOLDER="ArrowOS" ;;
+          derp*)      SF_FOLDER="DerpFest" ;;
+          cipher)     SF_FOLDER="CipherOS" ;;
+          *)          SF_FOLDER="$ROM_NAME" ;;
+        esac
 
-       if [ -z "${ZIP:-}" ]; then
-       echo "No ZIP found!"
-       exit 1
-       fi
+        DEVICE="${{ github.event.inputs.DEVICE_NAME }}"
+        SF_PATH="/home/frs/project/gta4l-builds/$SF_FOLDER/$DEVICE"
+        echo "Uploading: $FILENAME -> $SF_PATH"
 
-       FILENAME="$(basename -- "$ZIP")"
-       ROM_NAME="$(echo "$FILENAME" | sed 's/[-_].*//' | tr '[:upper:]' '[:lower:]')"
+        crave ssh -- "mkdir -p ~/.ssh; printf '%s' \"$SF_KEY_B64\" | base64 -d > ~/.ssh/sf_key; chmod 600 ~/.ssh/sf_key; ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null; rsync -avP -e 'ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no' '$ZIP' 'mkpromvp@frs.sourceforge.net:$SF_PATH/'"
 
-       case "$ROM_NAME" in
-       axion)      SF_FOLDER="AxionOS" ;;
-       lineage)    SF_FOLDER="LineageOS" ;;
-       crdroid)    SF_FOLDER="crDroid" ;;
-       infinity*)  SF_FOLDER="InfinityX" ;;
-       lunaris)    SF_FOLDER="Lunaris" ;;
-       rising*)    SF_FOLDER="RisingOS" ;;
-       pixel*)     SF_FOLDER="PixelOS" ;;
-       arrow)      SF_FOLDER="ArrowOS" ;;
-       derp*)      SF_FOLDER="DerpFest" ;;
-       cipher)     SF_FOLDER="CipherOS" ;;
-       *)          SF_FOLDER="$ROM_NAME" ;;
-       esac
-
-       DEVICE="${{ github.event.inputs.DEVICE_NAME }}"
-       SF_PATH="/home/frs/project/gta4l-builds/$SF_FOLDER/$DEVICE"
-
-       echo "Uploading: $(basename -- "$ZIP") -> $SF_PATH"
-
-       crave ssh -- "set -e; \
-       mkdir -p ~/.ssh; \
-       printf '%s' \"$SF_KEY_B64\" | base64 -d > ~/.ssh/sf_key; \
-       chmod 600 ~/.ssh/sf_key; \
-       ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null; \
-       rsync -avP -e 'ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no' \
-       '$ZIP' 'mkpromvp@frs.sourceforge.net:$SF_PATH/'"
-
-       echo "Done! https://sourceforge.net/projects/gta4l-builds/files/$SF_FOLDER/$DEVICE/"
+        echo "Done! https://sourceforge.net/projects/gta4l-builds/files/$SF_FOLDER/$DEVICE/"
 
       # Upload '.zip's and '.img's directly from 'crave' ssh.
     - name: Upload build artifact(s)
