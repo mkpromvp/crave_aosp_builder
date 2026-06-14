@@ -1,0 +1,28 @@
+name: Test SF Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Fake ZIP
+        run: echo "AxionOS gta4l test file" > AxionOS-TEST-gta4l.zip
+
+      - name: Upload to SourceForge
+        env:
+          SF_KEY_B64: ${{ secrets.SF_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key
+          chmod 600 ~/.ssh/sf_key
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null
+          rsync -avP \
+            -e "ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no" \
+            "AxionOS-TEST-gta4l.zip" \
+            "mkpromvp@frs.sourceforge.net:/home/frs/project/gta4l-builds/"
