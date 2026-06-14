@@ -621,7 +621,7 @@ jobs:
         case "$ROM_NAME" in
           axion)      SF_FOLDER="AxionOS" ;;
           lineage)    SF_FOLDER="LineageOS" ;;
-          crdroid)    SF_FOLDER="crDroid" ;;
+          crdroid*)   SF_FOLDER="crDroid" ;;
           infinity*)  SF_FOLDER="InfinityX" ;;
           lunaris)    SF_FOLDER="Lunaris" ;;
           rising*)    SF_FOLDER="RisingOS" ;;
