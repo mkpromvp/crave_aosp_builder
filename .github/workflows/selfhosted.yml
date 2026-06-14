@@ -641,6 +641,59 @@ jobs:
 
         echo "Done! https://sourceforge.net/projects/gta4l-builds/files/$SF_FOLDER/$DEVICE/"
 
+
+      # Upload Release to SourceForge
+    - name: Upload Release to SourceForge
+      if: ${{ success() }}
+      continue-on-error: true
+      env:
+        SF_KEY_B64: ${{ secrets.SF_PRIVATE_KEY }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        mkdir -p ~/.ssh
+        printf '%s' "$SF_KEY_B64" | base64 -d > ~/.ssh/sf_key
+        chmod 600 ~/.ssh/sf_key
+        ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null
+
+        RELEASE_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/latest" \
+          | python3 -c "import sys,json; assets=json.load(sys.stdin)['assets']; \
+            zips=[a['browser_download_url'] for a in assets if a['name'].endswith('.zip') \
+            and 'ota' not in a['name'].lower()]; print(zips[0] if zips else '')")
+
+        if [ -z "$RELEASE_URL" ]; then echo "No ZIP in release!"; exit 0; fi
+
+        FILENAME=$(basename "$RELEASE_URL")
+        echo "Downloading: $FILENAME"
+        curl -L -H "Authorization: token $GH_TOKEN" -o "/tmp/$FILENAME" "$RELEASE_URL"
+
+        ROM_RAW=$(echo "$FILENAME" | sed 's/[-_].*//' | tr '[:upper:]' '[:lower:]' | sed 's/android$//' | sed 's/aosp$//')
+        case "$ROM_RAW" in
+          axion)      SF_FOLDER="AxionOS" ;;
+          lineage)    SF_FOLDER="LineageOS" ;;
+          crdroid*)   SF_FOLDER="crDroid" ;;
+          infinity*)  SF_FOLDER="InfinityX" ;;
+          lunaris*)   SF_FOLDER="Lunaris" ;;
+          rising*)    SF_FOLDER="RisingOS" ;;
+          pixel*)     SF_FOLDER="PixelOS" ;;
+          arrow*)     SF_FOLDER="ArrowOS" ;;
+          derp*)      SF_FOLDER="DerpFest" ;;
+          evox*)      SF_FOLDER="EvolutionX" ;;
+          *)          SF_FOLDER="$ROM_RAW" ;;
+        esac
+
+        SF_PATH="/home/frs/project/gta4l-builds/$SF_FOLDER/${{ github.event.inputs.DEVICE_NAME }}"
+        echo "Uploading to: $SF_PATH"
+
+        rsync -avP \
+          -e "ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes" \
+          "/tmp/$FILENAME" \
+          "mkpromvp@frs.sourceforge.net:$SF_PATH/"
+
+        echo "✅ Done!"
+        echo "🔗 https://sourceforge.net/projects/gta4l-builds/files/$SF_FOLDER/${{ github.event.inputs.DEVICE_NAME }}/"
+        rm -f "/tmp/$FILENAME"
+
       # Upload '.zip's and '.img's directly from 'crave' ssh.
     - name: Upload build artifact(s)
       continue-on-error: true
