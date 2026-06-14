@@ -636,7 +636,7 @@ jobs:
         SF_PATH="/home/frs/project/gta4l-builds/$SF_FOLDER/$DEVICE"
         echo "Uploading: $FILENAME -> $SF_PATH"
 
-        crave ssh -- "mkdir -p ~/.ssh; printf '%s' \"$SF_KEY_B64\" | base64 -d > ~/.ssh/sf_key; chmod 600 ~/.ssh/sf_key; ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null; rsync -avP -e 'ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no' '$ZIP' 'mkpromvp@frs.sourceforge.net:$SF_PATH/'"
+        crave ssh -- "mkdir -p ~/.ssh; printf '%s' \"$SF_KEY_B64\" | base64 -d > ~/.ssh/sf_key; chmod 600 ~/.ssh/sf_key; ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts 2>/dev/null; rsync -avP -e 'ssh -i ~/.ssh/sf_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes' '$ZIP' 'mkpromvp@frs.sourceforge.net:$SF_PATH/'"
 
         echo "Done! https://sourceforge.net/projects/gta4l-builds/files/$SF_FOLDER/$DEVICE/"
 
