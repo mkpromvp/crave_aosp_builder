@@ -62,6 +62,7 @@ jobs:
 
             case "$ROM_NAME" in
               axion)      SF_FOLDER="AxionOS" ;;
+              voltage)    SF_FOLDER="Voltage" ;;
               matrixx)    SF_FOLDER="Matrixx" ;;
               lineage)    SF_FOLDER="LineageOS" ;;
               crdroid*)   SF_FOLDER="crDroid" ;;
