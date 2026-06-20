@@ -670,6 +670,7 @@ jobs:
         ROM_RAW=$(echo "$FILENAME" | sed 's/[-_].*//' | tr '[:upper:]' '[:lower:]' | sed 's/android$//' | sed 's/aosp$//')
         case "$ROM_RAW" in
           axion)      SF_FOLDER="AxionOS" ;;
+          matrixx)    SF_FOLDER="Matrixx" ;;
           lineage)    SF_FOLDER="LineageOS" ;;
           crdroid*)   SF_FOLDER="crDroid" ;;
           infinity*)  SF_FOLDER="InfinityX" ;;
