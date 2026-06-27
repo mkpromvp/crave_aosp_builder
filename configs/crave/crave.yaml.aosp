@@ -1,4 +1,6 @@
 #This is a template, modify as you like
+crDroid 13:
+  ignoreClientHostname: true
 CipherOS:
   ignoreClientHostname: true
 Arrow OS:

@@ -16,6 +16,7 @@ on:
         default: 'LineageOS 21.0'
         type: choice
         options:
+          - 'crDroid 13.0'
           - 'LineageOS 20.0'
           - 'LineageOS 21.0'
           - 'LineageOS 22.1'
@@ -113,6 +114,11 @@ jobs:
           export PROJECTFOLDER="/crave-devspaces/Lineage22"
           export PROJECTID="93"
           export REPO_INIT="repo init -u https://github.com/accupara/los22.git -b lineage-22.1 --git-lfs --depth=1"
+        ;;
+        "crDroid 13.0")
+          export PROJECTFOLDER="/crave-devspaces/crDroid13"
+          export PROJECTID="36"
+          export REPO_INIT="repo init -u https://github.com/crdroidandroid/android.git -b 13.0 --git-lfs --depth=1"
         ;;
         "LineageOS 20.0")
           export PROJECTFOLDER="/crave-devspaces/Lineage20"
