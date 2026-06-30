@@ -620,6 +620,7 @@ jobs:
 
         case "$ROM_NAME" in
           axion)      SF_FOLDER="AxionOS" ;;
+          EvolutionX)    SF_FOLDER="EvolutionX" ;;
           voltage)    SF_FOLDER="Voltage" ;;
           matrixx)    SF_FOLDER="Matrixx" ;;
           lineage)    SF_FOLDER="LineageOS" ;;
